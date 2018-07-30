@@ -1,8 +1,11 @@
 package pl.kamilsitarski.simplekmeans;
 
 
+import tests.KMeansData;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class KMeans<T extends SimpleKMeansData> {
 
@@ -125,8 +128,5 @@ public class KMeans<T extends SimpleKMeansData> {
     private void log(String msg) {
         System.out.println("KMeans: " + msg);
     }
-
-
-
 
 }
