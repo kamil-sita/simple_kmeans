@@ -1,7 +1,7 @@
-#simple_kmeans
+# simple_kmeans
 **simple_kmeans** is easy to use Java KMeans library.
 
-###usage
+### usage
 Using **simple_kmeans** library is very easy: 
 1. Compile source or download latest version from releases tab.
 2. Put it into external libraries in your IDE of choice.
