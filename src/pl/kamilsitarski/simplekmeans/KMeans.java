@@ -66,7 +66,7 @@ public class KMeans<T extends SimpleKMeansData> {
 
 
     /**
-     * Runs <i>iterationCount</i> iterations of KMeans with <i>threadCount</i> threads.
+     * Runs <i>iterationCount</i> iterations of KMeans with <i>threadCount</i> threads. Not well optimized yet.
      * @param iterationCount number of iterations
      * @param threadsCount maximum number of threads to use
      */
