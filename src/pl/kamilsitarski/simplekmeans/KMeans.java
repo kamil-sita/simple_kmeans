@@ -133,30 +133,6 @@ public class KMeans<T extends SimpleKMeansData> {
         wasIterated = true;
     }
 
-    private List<T>[] findPointsClosestToLastCalculatedKMeansPoints() {
-        List<T>[] pointsClosestToKMeansPoints = initializeEmptyListArrayOfSize(KMEANS_RESULTS_POINTS_COUNT);
-
-        for (int i = 0; i < INPUT_POINTS.size(); i++) {
-            T closestKMeanPoint = getClosestCalculatedKMeanPointTo(INPUT_POINTS.get(i));
-            int idOfKMeanPoint = getIdOfCalculatedKMeanPoint(closestKMeanPoint);
-            pointsClosestToKMeansPoints[idOfKMeanPoint].add(INPUT_POINTS.get(i));
-        }
-
-        return pointsClosestToKMeansPoints;
-    }
-
-    private void iterateMainLoopThreadedInThread(int allThreadsCount, int threadId, List<T>[] pointsClosestToKMeansPoints) {
-        for (int i = 0; i < KMEANS_RESULTS_POINTS_COUNT; i++) {
-            if (i % allThreadsCount != threadId) continue;
-            T point = getMeanOfListRelatedToIteration(i, pointsClosestToKMeansPoints);
-            if (point == null) {
-                point = getNewRandomTInstance();
-            }
-            calculatedKMeansPoints.add(point);
-        }
-    }
-
-
     private class ThreadedKMeans implements Runnable {
 
         private Semaphore isFinishedSemaphore;
@@ -181,8 +157,29 @@ public class KMeans<T extends SimpleKMeansData> {
             isFinishedSemaphore.release();
         }
 
+        private void iterateMainLoopThreadedInThread(int allThreadsCount, int threadId, List<T>[] pointsClosestToKMeansPoints) {
+            for (int i = 0; i < KMEANS_RESULTS_POINTS_COUNT; i++) {
+                if (i % allThreadsCount != threadId) continue;
+                T point = getMeanOfListRelatedToIteration(i, pointsClosestToKMeansPoints);
+                if (point == null) {
+                    point = getNewRandomTInstance();
+                }
+                calculatedKMeansPoints.add(point);
+            }
+        }
     }
 
+    private List<T>[] findPointsClosestToLastCalculatedKMeansPoints() {
+        List<T>[] pointsClosestToKMeansPoints = initializeEmptyListArrayOfSize(KMEANS_RESULTS_POINTS_COUNT);
+
+        for (int i = 0; i < INPUT_POINTS.size(); i++) {
+            T closestKMeanPoint = getClosestCalculatedKMeanPointTo(INPUT_POINTS.get(i));
+            int idOfKMeanPoint = getIdOfCalculatedKMeanPoint(closestKMeanPoint);
+            pointsClosestToKMeansPoints[idOfKMeanPoint].add(INPUT_POINTS.get(i));
+        }
+
+        return pointsClosestToKMeansPoints;
+    }
 
     private List<T>[] initializeEmptyListArrayOfSize(final int SIZE) {
         List<T>[] lists = new ArrayList[SIZE];

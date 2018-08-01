@@ -10,11 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class KMeansTest {
-
-
-
-    ///////// http://www.baeldung.com/thread-pool-java-and-guava
-
     /*
     Passing those tests does not in any case indicate that code is working, but that it might be working, as KMeans is machine learning algorithm.
      */
