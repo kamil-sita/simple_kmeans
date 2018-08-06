@@ -20,7 +20,7 @@ class KMeansTest {
     ///checking whether initialization with good values works and with bad values doesn't
     @Test
     void initializationTest() {
-        KMeans<ExampleData> kMeans;
+        KMeans<tests.ExampleData> kMeans;
         kMeans = getCorrectSample();
         assertTrue(kMeans.isInitialized());
         kMeans = getBadSample();
@@ -29,10 +29,10 @@ class KMeansTest {
 
     @Test
     void areResultsProbablyCorrect() {
-        KMeans<ExampleData> kMeans = getCorrectSample();
+        KMeans<tests.ExampleData> kMeans = getCorrectSample();
         final int ITERATION_COUNT = 1000; //must be at least 1
         kMeans.iterate(ITERATION_COUNT);
-        List<ExampleData> data = kMeans.getResults();
+        List<tests.ExampleData> data = kMeans.getResults();
         assertTrue(atLeastOneNotNullInList(data));
     }
 
