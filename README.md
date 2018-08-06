@@ -29,8 +29,8 @@ public class RgbKmeansContainer implements SimpleKMeansData {
 
     @Override
     //calculates distance to other object of this same type
-    public double distanceTo(SimpleKMeansData simpleKMeansData) {
-        return rgbValue.getDistanceFrom(((RgbKmeansContainer) simpleKMeansData).rgbValue);
+    public double distanceTo(SimpleKMeansData KMeansData) {
+        return rgbValue.getDistanceFrom(((RgbKmeansContainer) KMeansData).rgbValue);
     }
 
     @Override
@@ -38,8 +38,8 @@ public class RgbKmeansContainer implements SimpleKMeansData {
     public SimpleKMeansData meanOfList(List<SimpleKMeansData> list) {
         if (list == null || list.size() == 0) return null;
         RGB rgb = new RGB(0, 0 ,0);
-        for (SimpleKMeansData simpleKMeansData : list) {
-            RGB rgbElement = ((RgbKmeansContainer) simpleKMeansData).rgbValue;
+        for (SimpleKMeansData KMeansData : list) {
+            RGB rgbElement = ((RgbKmeansContainer) KMeansData).rgbValue;
             rgb.r += rgbElement.r;
             rgb.g += rgbElement.g;
             rgb.b += rgbElement.b;

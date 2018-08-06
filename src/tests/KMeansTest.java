@@ -1,7 +1,7 @@
 package tests;
 
 import org.junit.jupiter.api.Test;
-import pl.kamilsitarski.simplekmeans.KMeans;
+import pl.ksitarski.simplekmeans.KMeans;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ class KMeansTest {
     ///checking whether initialization with good values works and with bad values doesn't
     @Test
     void initializationTest() {
-        KMeans<KMeansData> kMeans;
+        KMeans<ExampleData> kMeans;
         kMeans = getCorrectSample();
         assertTrue(kMeans.isInitialized());
         kMeans = getBadSample();
@@ -29,115 +29,115 @@ class KMeansTest {
 
     @Test
     void areResultsProbablyCorrect() {
-        KMeans<KMeansData> kMeans = getCorrectSample();
+        KMeans<ExampleData> kMeans = getCorrectSample();
         final int ITERATION_COUNT = 1000; //must be at least 1
         kMeans.iterate(ITERATION_COUNT);
-        List<KMeansData> data = kMeans.getResults();
+        List<ExampleData> data = kMeans.getResults();
         assertTrue(atLeastOneNotNullInList(data));
     }
 
     @Test
     void areResultsProbablyCorrectThreaded() {
-        KMeans<KMeansData> kMeans = getCorrectSample();
+        KMeans<ExampleData> kMeans = getCorrectSample();
         final int ITERATION_COUNT = 1000; //must be at least 1
         final int THREAD_COUNT = 30; //must be at least 1
         kMeans.iterateWithThreads(ITERATION_COUNT, THREAD_COUNT);
-        List<KMeansData> data = kMeans.getResults();
+        List<ExampleData> data = kMeans.getResults();
         assertTrue(atLeastOneNotNullInList(data));
     }
 
     //checking whether results actually differ between iterations
     @Test
     void learningTest() {
-        KMeans<KMeansData> kMeans = getCorrectSample();
+        KMeans<ExampleData> kMeans = getCorrectSample();
         final int ITERATION_COUNT = 10; //must be at least 1
         kMeans.iterate(ITERATION_COUNT);
-        List<KMeansData> dataAfterFirstIterations = kMeans.getResults();
+        List<ExampleData> dataAfterFirstIterations = kMeans.getResults();
         kMeans.iterate(1);
-        List<KMeansData> dataAfterLaterIterations = kMeans.getResults();
+        List<ExampleData> dataAfterLaterIterations = kMeans.getResults();
         assertTrue(doListsDiffer(dataAfterFirstIterations, dataAfterLaterIterations));
     }
 
     @Test
     void learningTestThreaded() {
-        KMeans<KMeansData> kMeans = getCorrectSample();
+        KMeans<ExampleData> kMeans = getCorrectSample();
         final int ITERATION_COUNT = 10; //must be at least 1
         final int THREAD_COUNT = 30; //must be at least 1
         kMeans.iterateWithThreads(ITERATION_COUNT, THREAD_COUNT);
-        List<KMeansData> dataAfterFirstIterations = kMeans.getResults();
+        List<ExampleData> dataAfterFirstIterations = kMeans.getResults();
         kMeans.iterateWithThreads(1, THREAD_COUNT);
-        List<KMeansData> dataAfterLaterIterations = kMeans.getResults();
+        List<ExampleData> dataAfterLaterIterations = kMeans.getResults();
         assertTrue(doListsDiffer(dataAfterFirstIterations, dataAfterLaterIterations));
     }
 
     @Test
     void learningTestMixed() {
-        KMeans<KMeansData> kMeans = getCorrectSample();
+        KMeans<ExampleData> kMeans = getCorrectSample();
         final int ITERATION_COUNT = 5; //must be at least 1
         final int THREAD_COUNT = 30; //must be at least 1
         final int MIX_ITERATIONS = 4;
         for (int i = 0; i < MIX_ITERATIONS; i++) {
             kMeans.iterateWithThreads(ITERATION_COUNT, THREAD_COUNT);
-            List<KMeansData> dataAfterFirstIterations = kMeans.getResults();
+            List<ExampleData> dataAfterFirstIterations = kMeans.getResults();
             kMeans.iterate(1);
-            List<KMeansData> dataAfterLaterIterations = kMeans.getResults();
+            List<ExampleData> dataAfterLaterIterations = kMeans.getResults();
             assertTrue(doListsDiffer(dataAfterFirstIterations, dataAfterLaterIterations));
         }
         for (int i = 0; i < MIX_ITERATIONS; i++) {
             kMeans.iterate(ITERATION_COUNT);
-            List<KMeansData> dataAfterFirstIterations = kMeans.getResults();
+            List<ExampleData> dataAfterFirstIterations = kMeans.getResults();
             kMeans.iterateWithThreads(1, THREAD_COUNT);
-            List<KMeansData> dataAfterLaterIterations = kMeans.getResults();
+            List<ExampleData> dataAfterLaterIterations = kMeans.getResults();
             assertTrue(doListsDiffer(dataAfterFirstIterations, dataAfterLaterIterations));
         }
     }
 
     @Test
     void longTest() {
-        KMeans<KMeansData> kMeans = getBigCorrectSample();
+        KMeans<ExampleData> kMeans = getBigCorrectSample();
         final int ITERATION_COUNT = 1000; //must be at least 1
         kMeans.iterate(ITERATION_COUNT);
-        List<KMeansData> afterInitial = kMeans.getResults();
+        List<ExampleData> afterInitial = kMeans.getResults();
         kMeans.iterate(1);
-        List<KMeansData> afterAdditional = kMeans.getResults();
+        List<ExampleData> afterAdditional = kMeans.getResults();
         assertTrue(doListsDiffer(afterInitial, afterAdditional));
     }
 
     @Test
     void longTestWithThreads() {
-        KMeans<KMeansData> kMeans = getBigCorrectSample();
+        KMeans<ExampleData> kMeans = getBigCorrectSample();
         final int ITERATION_COUNT = 1000; //must be at least 1
         final int THREAD_COUNT = 8; //must be at least 1
         kMeans.iterateWithThreads(ITERATION_COUNT, THREAD_COUNT);
-        List<KMeansData> afterInitial = kMeans.getResults();
+        List<ExampleData> afterInitial = kMeans.getResults();
         kMeans.iterateWithThreads(1, THREAD_COUNT);
-        List<KMeansData> afterAdditional = kMeans.getResults();
+        List<ExampleData> afterAdditional = kMeans.getResults();
         assertTrue(doListsDiffer(afterInitial, afterAdditional));
     }
 
 
-    private boolean atLeastOneNotNullInList(List<KMeansData> list) {
+    private boolean atLeastOneNotNullInList(List<ExampleData> list) {
         return notNullCount(list) > 0;
     }
 
-    private KMeans<KMeansData> getCorrectSample() {
-        List<KMeansData> data = new ArrayList<>();
+    private KMeans<ExampleData> getCorrectSample() {
+        List<ExampleData> data = new ArrayList<>();
         for (int i = 0; i < COUNT; i++) {
-            data.add(new KMeansData());
+            data.add(new ExampleData());
         }
         return new KMeans<>(COUNT, data);
     }
 
-    private KMeans<KMeansData> getBigCorrectSample() {
-        List<KMeansData> data = new ArrayList<>();
+    private KMeans<ExampleData> getBigCorrectSample() {
+        List<ExampleData> data = new ArrayList<>();
         for (int i = 0; i < BIG_COUNT; i++) {
-            data.add(new KMeansData());
+            data.add(new ExampleData());
         }
         return new KMeans<>(BIG_COUNT, data);
     }
 
-    private KMeans<KMeansData> getBadSample() {
-        return new KMeans<>(0, null);
+    private KMeans<ExampleData> getBadSample() {
+        return new KMeans<>(0, new ArrayList<>());
     }
 
     private static int notNullCount(List list) {
