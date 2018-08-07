@@ -1,13 +1,14 @@
 package pl.ksitarski.simplekmeans;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import static pl.ksitarski.simplekmeans.Logger.log;
-
 public class KMeans<T extends KMeansData> {
+
+    private static KMeansLogger kmeansLogger;
 
     private final int RESULTS_COUNT; //number of expected results
     private final List<T> INPUT_POINTS; //points given by user
@@ -119,7 +120,7 @@ public class KMeans<T extends KMeansData> {
     }
 
     /**
-     * Returns calculated KMeans in form of a list
+     * Returns calculated KMeans in form of a list. Some results may be null, especially after low amount of iterations.
      * @return list with calculated results.
      */
     public List<T> getResults() {
@@ -128,6 +129,22 @@ public class KMeans<T extends KMeansData> {
             return null;
         }
         return calculatedMeanPoints;
+    }
+
+    /**
+     * Sets logger, that implements KMeansLogger interface
+     * @param logger logger
+     */
+    public static void setLogger(KMeansLogger logger) {
+        kmeansLogger = logger;
+    }
+
+    private static void log(String msg) {
+        if (kmeansLogger == null) {
+            kmeansLogger = msg1 -> System.out.println("KMeans " + new SimpleDateFormat("(HH:mm:ss)") + ": " + msg1);
+            kmeansLogger.log("Logger not set, will use default");
+        }
+        kmeansLogger.log(msg);
     }
 
     private void runThreadedIterations(int iterations, int threadCount) {
