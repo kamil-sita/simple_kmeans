@@ -42,14 +42,17 @@ public class KMeans<T extends KMeansData> {
     
     private void initializeData() {
         genericInstanceCreator = INPUT_POINTS.get(0);
-        genericInstanceCreator = getNewRandomGenericInstance();
+        genericInstanceCreator = getNewRandomGenericInstance(); //genericInstanceCreator should not be dependant on given data, so it is instead generated from it.
+        initializeRandomlyCalculatedMeanPoints();
+        isInitialized = true;
+    }
+
+    private void initializeRandomlyCalculatedMeanPoints() {
         calculatedMeanPoints = new ArrayList<>();
         for (int i = 0; i < RESULTS_COUNT; i++) {
             calculatedMeanPoints.add(getNewRandomGenericInstance());
         }
-        isInitialized = true;
     }
-    
 
     /**
      * Runs <i>iterationCount</i> iterations of KMeans.
@@ -71,7 +74,7 @@ public class KMeans<T extends KMeansData> {
     }
 
     private void singleNonThreadedIteration() {
-        List<T>[] pointsClosestToMeanPoints = findPointsClosestToLastCalculatedMeanPoints();
+        List<T>[] pointsClosestToMeanPoints = getPointsClosestToLastCalculatedMeanPoints();
         calculatedMeanPoints = new ArrayList<>();
         for (int pointId = 0; pointId < RESULTS_COUNT; pointId++) {
             T point = getMeanOfListRelatedToPoint(pointId, pointsClosestToMeanPoints);
@@ -80,7 +83,6 @@ public class KMeans<T extends KMeansData> {
             }
             calculatedMeanPoints.add(point);
         }
-
     }
 
     /**
@@ -158,7 +160,7 @@ public class KMeans<T extends KMeansData> {
         }
 
         for (int i = 0; i < iterations; i++) {
-            List<T>[] pointsClosestToKMeansPoints = findPointsClosestToLastCalculatedMeanPoints();
+            List<T>[] pointsClosestToKMeansPoints = getPointsClosestToLastCalculatedMeanPoints();
             calculatedMeanPoints = new ArrayList<>();
             for (int threadId = 0; threadId < threadCount; threadId++) {
                 threadedKMeans.get(threadId).setPointsClosestToKMeansPoints(pointsClosestToKMeansPoints);
@@ -211,11 +213,11 @@ public class KMeans<T extends KMeansData> {
         }
     }
 
-    private List<T>[] findPointsClosestToLastCalculatedMeanPoints() {
+    private List<T>[] getPointsClosestToLastCalculatedMeanPoints() {
         List<T>[] pointsClosestToKMeansPoints = initializeEmptyListArrayOfSize(RESULTS_COUNT);
 
         for (int i = 0; i < INPUT_POINTS.size(); i++) {
-            T closestKMeanPoint = getClosestCalculatedKMeanPointTo(INPUT_POINTS.get(i));
+            T closestKMeanPoint = getClosestCalculatedMeanPointTo(INPUT_POINTS.get(i));
             int idOfKMeanPoint = getIdOfCalculatedKMeanPoint(closestKMeanPoint);
             pointsClosestToKMeansPoints[idOfKMeanPoint].add(INPUT_POINTS.get(i));
         }
@@ -237,8 +239,6 @@ public class KMeans<T extends KMeansData> {
         );
     }
 
-    
-
     private int getIdOfCalculatedKMeanPoint(T point) {
         for (int i = 0; i < calculatedMeanPoints.size(); i++) {
             if (calculatedMeanPoints.get(i).equals(point)) {
@@ -248,7 +248,7 @@ public class KMeans<T extends KMeansData> {
         return -1;
     }
 
-    private T getClosestCalculatedKMeanPointTo(T point) {
+    private T getClosestCalculatedMeanPointTo(T point) {
         T closest = null;
         double distanceToClosest = 0;
         for (T kMeanPoint : calculatedMeanPoints) {
@@ -285,5 +285,4 @@ public class KMeans<T extends KMeansData> {
     public boolean isInitialized() {
         return isInitialized;
     }
-
 }
