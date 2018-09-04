@@ -9,6 +9,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+
 class KMeansTest {
     /*
     Passing those tests does not in any case indicate that code is working, but that it might be working, as KMeans is machine learning algorithm.
@@ -18,7 +19,7 @@ class KMeansTest {
     private final int BIG_COUNT = 2000; //should be bigger than 100
 
     ///checking whether initialization with good values works and with bad values doesn't
-    @Test
+    @org.junit.jupiter.api.Test
     void initializationTest() {
         KMeans<tests.ExampleData> kMeans;
         kMeans = getCorrectSample();
@@ -113,6 +114,20 @@ class KMeansTest {
         kMeans.iterateWithThreads(1, THREAD_COUNT);
         List<ExampleData> afterAdditional = kMeans.getResults();
         assertTrue(doListsDiffer(afterInitial, afterAdditional));
+    }
+
+    @Test
+    void onUpdateTest() {
+        KMeans<ExampleData> kMeans = getCorrectSample();
+        final int ITERATION_COUNT = 10;
+        final int[] updates = {0};
+        kMeans.setOnUpdate(() -> {
+            updates[0]++;
+            System.out.println(kMeans.getProgress());
+        }, false);
+        kMeans.iterate(ITERATION_COUNT);
+        assertTrue(updates[0] >= 0);
+
     }
 
 
