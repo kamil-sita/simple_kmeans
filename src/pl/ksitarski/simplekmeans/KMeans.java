@@ -74,8 +74,6 @@ public class KMeans<T extends KMeansData> {
         updateProgress(0);
         for (int i = 0; i < iterationCount; i++) {
             singleNonThreadedIteration();
-            System.out.println(i);
-            System.out.println(iterationCount);
             updateProgress((i+1)*1.0/iterationCount*1.0);
         }
         wasIterated = true;
