@@ -58,3 +58,13 @@ KMeans<RgbKmeansContainer> kMeans = new KMeans(32, rgbList);
 kMeans.iterate(1000);
 List<RgbKmeansContainer> results = kMeans.getResults();
 ```
+
+5. In case you wanted to inform user of any updates you can use this construct:
+
+```
+kMeans.setOnUpdate(() ->
+    GiveFeedbackToUser.updateProgress(kMeans.getProgress()),
+    false);
+```
+
+GiveFeedbackToUser.updateProgress(double) will be called on every iteration of kMeans.
