@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 
 public class KMeans<T extends KMeansData> {
 
@@ -69,7 +68,7 @@ public class KMeans<T extends KMeansData> {
         }
         if (iterationCount <= 0) {
             log("Iteration count cannot be lower or equal 0");
-            return;
+            throw new IllegalArgumentException("Iteration count cannot be lower or equal 0, is: " + iterationCount);
         }
         updateProgress(0);
         for (int i = 0; i < iterationCount; i++) {
@@ -91,136 +90,12 @@ public class KMeans<T extends KMeansData> {
         }
     }
 
-    /**
-     * Runs <i>iterationCount</i> iterations of KMeans with <i>threadCount</i> threads. Not well optimized yet.
-     * @param iterationCount number of iterations
-     * @param threadsCount maximum number of threads to use
-     */
-    public void iterateWithThreads(int iterationCount, int threadsCount) {
-        if (!isThreadedDataCorrect(iterationCount, threadsCount)) return;
-        var realThreadCount = calculateReadThreadCount(threadsCount);
-        runThreadedIterations(iterationCount, realThreadCount);
-        wasIterated = true;
-    }
-
-    private boolean isThreadedDataCorrect(int iterationCount, int threadsCount) {
-        if (!isInitialized) {
-            log("Was not initialized!");
-            return false;
-        }
-        if (iterationCount <= 0) {
-            log("Iteration count cannot be lower or equal 0");
-            return false;
-        }
-        if (threadsCount < 1) {
-            log("Thread count cannot be lower than 1");
-            return false;
-        }
-        return true;
-    }
-
-    private int calculateReadThreadCount(int threadCount) {
-        //due to the way multithreaded code is written, maximum number of threads is only RESULTS_COUNT big.
-        if (RESULTS_COUNT < threadCount) {
-            return RESULTS_COUNT;
-        } else {
-            return threadCount;
-        }
-    }
-
-    /**
-     * Returns calculated KMeans in form of a list. Some results may be null, especially after low amount of iterations.
-     * @return list with calculated results.
-     */
-    public List<T> getResults() {
-        if (!wasIterated) {
-            log("Cannot retrieve results before singleIteration!");
-            return null;
-        }
-        return calculatedMeanPoints;
-    }
-
-    /**
-     * Sets logger, that implements KMeansLogger interface
-     * @param logger logger
-     */
-    public static void setLogger(KMeansLogger logger) {
-        kmeansLogger = logger;
-    }
-
     private static void log(String msg) {
         if (kmeansLogger == null) {
             kmeansLogger = msg1 -> System.out.println("KMeans " + new SimpleDateFormat("(HH:mm:ss)") + ": " + msg1);
             kmeansLogger.log("Logger not set, will use default");
         }
         kmeansLogger.log(msg);
-    }
-
-    private void runThreadedIterations(int iterations, int threadCount) {
-        var iterationCompletedSemaphore = new Semaphore(0);
-        var threads = new Thread[threadCount];
-        var threadedKMeans = new ArrayList<ThreadedKMeans>(threadCount);
-
-        for (int i = 0; i < threadCount; i++) {
-            threadedKMeans.add(new ThreadedKMeans(iterationCompletedSemaphore, i, threadCount));
-            threads[i] = new Thread(threadedKMeans.get(i));
-        }
-
-        updateProgress(0);
-
-        for (int i = 0; i < iterations; i++) {
-            List<T>[] pointsClosestToKMeansPoints = getPointsClosestToLastCalculatedMeanPoints();
-            calculatedMeanPoints = new ArrayList<>();
-            for (int threadId = 0; threadId < threadCount; threadId++) {
-                threadedKMeans.get(threadId).setPointsClosestToKMeansPoints(pointsClosestToKMeansPoints);
-                threads[threadId].run();
-            }
-            try {
-                //waiting until all threads completed their iteration
-                iterationCompletedSemaphore.acquire(threadCount);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                return;
-            }
-            updateProgress((i + 1)/(1.0 * iterations));
-        }
-        wasIterated = true;
-    }
-
-    private class ThreadedKMeans implements Runnable {
-
-        private Semaphore isFinishedSemaphore;
-        private int threadId;
-        private int allThreadCount;
-        private List<T>[] pointsClosestToKMeansPoints;
-
-        ThreadedKMeans(Semaphore isFinishedSemaphore, int threadId, int allThreadCount) {
-            this.isFinishedSemaphore = isFinishedSemaphore;
-            this.threadId = threadId;
-            this.allThreadCount = allThreadCount;
-        }
-
-        void setPointsClosestToKMeansPoints(List<T>[] pointsClosestToKMeansPoints) {
-            this.pointsClosestToKMeansPoints = pointsClosestToKMeansPoints;
-        }
-
-        @Override
-        public void run() {
-            if (pointsClosestToKMeansPoints == null) return;
-            iterateMainLoopThreadedInThread(allThreadCount, threadId, pointsClosestToKMeansPoints);
-            isFinishedSemaphore.release();
-        }
-
-        private void iterateMainLoopThreadedInThread(int allThreadsCount, int threadId, List<T>[] pointsClosestToKMeansPoints) {
-            for (int i = 0; i < RESULTS_COUNT; i++) {
-                if (i % allThreadsCount != threadId) continue;
-                var point = getMeanOfListRelatedToPoint(i, pointsClosestToKMeansPoints);
-                if (point == null) {
-                    point = getNewRandomGenericInstance();
-                }
-                calculatedMeanPoints.add(point);
-            }
-        }
     }
 
     private List<T>[] getPointsClosestToLastCalculatedMeanPoints() {
@@ -296,34 +171,46 @@ public class KMeans<T extends KMeansData> {
         return isInitialized;
     }
 
-    private boolean otherThread = false;
     private void updateProgress(double progress) {
         this.iterationProgress = progress;
         if (onUpdate != null) {
-            if (otherThread) {
-                new Thread(onUpdate).start();
-            } else {
-                onUpdate.run();
-            }
+            onUpdate.run();
         }
     }
 
     /**
      * Sets runnable that is called every time iteration is completed. Example case could be reporting iterationProgress on user interface
      * @param runnable runnable that should be called on completion of the iteration
-     * @param otherThread if true, runnable is called on new thread, which may introduce some lag. If false, runnable is called on calculating thread,
-     *                    which may slow down calculations
      */
-    public void setOnUpdate(Runnable runnable, boolean otherThread) {
+    public void setOnUpdate(Runnable runnable) {
         this.onUpdate = runnable;
-        this.otherThread = otherThread;
     }
 
     /**
-     * Gets iterationProgress as double between 0.0 and 1.0
+     * Gets iterationProgress as a double between 0.0 and 1.0
      * @return percent iterationProgress
      */
     public double getProgress() {
         return iterationProgress;
+    }
+
+    /**
+     * Returns calculated KMeans in form of a list. Some results may be null, especially after low amount of iterations.
+     * @return list with calculated results.
+     */
+    public List<T> getResults() {
+        if (!wasIterated) {
+            log("Cannot retrieve results before singleIteration!");
+            return null;
+        }
+        return calculatedMeanPoints;
+    }
+
+    /**
+     * Sets logger that implements KMeansLogger interface
+     * @param logger logger
+     */
+    public static void setLogger(KMeansLogger logger) {
+        kmeansLogger = logger;
     }
 }

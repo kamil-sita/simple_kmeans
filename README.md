@@ -63,8 +63,7 @@ List<RgbKmeansContainer> results = kMeans.getResults();
 
 ```
 kMeans.setOnUpdate(() ->
-    GiveFeedbackToUser.updateProgress(kMeans.getProgress()),
-    false);
+    GiveFeedbackToUser.updateProgress(kMeans.getProgress()));
 ```
 
 GiveFeedbackToUser.updateProgress(double) will be called on every iteration of kMeans.
