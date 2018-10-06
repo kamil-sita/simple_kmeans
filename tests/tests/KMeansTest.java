@@ -33,7 +33,7 @@ class KMeansTest {
         KMeans<tests.ExampleData> kMeans = getCorrectSample();
         final int ITERATION_COUNT = 1000; //must be at least 1
         kMeans.iterate(ITERATION_COUNT);
-        List<tests.ExampleData> data = kMeans.getResults();
+        List<tests.ExampleData> data = kMeans.getCalculatedMeanPoints();
         assertTrue(atLeastOneNotNullInList(data));
     }
 
@@ -44,9 +44,9 @@ class KMeansTest {
         KMeans<ExampleData> kMeans = getCorrectSample();
         final int ITERATION_COUNT = 10; //must be at least 1
         kMeans.iterate(ITERATION_COUNT);
-        List<ExampleData> dataAfterFirstIterations = kMeans.getResults();
+        List<ExampleData> dataAfterFirstIterations = kMeans.getCalculatedMeanPoints();
         kMeans.iterate(1);
-        List<ExampleData> dataAfterLaterIterations = kMeans.getResults();
+        List<ExampleData> dataAfterLaterIterations = kMeans.getCalculatedMeanPoints();
         assertTrue(doListsDiffer(dataAfterFirstIterations, dataAfterLaterIterations));
     }
 
@@ -56,9 +56,9 @@ class KMeansTest {
         KMeans<ExampleData> kMeans = getBigCorrectSample();
         final int ITERATION_COUNT = 1000; //must be at least 1
         kMeans.iterate(ITERATION_COUNT);
-        List<ExampleData> afterInitial = kMeans.getResults();
+        List<ExampleData> afterInitial = kMeans.getCalculatedMeanPoints();
         kMeans.iterate(1);
-        List<ExampleData> afterAdditional = kMeans.getResults();
+        List<ExampleData> afterAdditional = kMeans.getCalculatedMeanPoints();
         assertTrue(doListsDiffer(afterInitial, afterAdditional));
     }
 
@@ -70,7 +70,7 @@ class KMeansTest {
         final int[] updates = {0};
         kMeans.setOnUpdate(() -> {
             updates[0]++;
-            System.out.println(kMeans.getProgress());
+            System.out.println(kMeans.getPercentOfCompletedProgress());
         });
         kMeans.iterate(ITERATION_COUNT);
         assertTrue(updates[0] >= 0);

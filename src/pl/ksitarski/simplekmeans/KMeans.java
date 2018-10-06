@@ -3,6 +3,7 @@ package pl.ksitarski.simplekmeans;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class KMeans<T extends KMeansData> {
@@ -15,8 +16,8 @@ public class KMeans<T extends KMeansData> {
     private List<T> calculatedMeanPoints;
     private T genericInstanceCreator; //new instances of T will be created with this instance
 
-    private Runnable onUpdate = null;
-    private double iterationProgress = 0;
+    private Runnable onUpdate = null; //runnable run after every iteration
+    private double percentProgress = 0;
 
     private boolean isInitialized = false;
     private boolean wasIterated = false;
@@ -92,7 +93,7 @@ public class KMeans<T extends KMeansData> {
 
     private static void log(String msg) {
         if (kmeansLogger == null) {
-            kmeansLogger = msg1 -> System.out.println("KMeans " + new SimpleDateFormat("(HH:mm:ss)") + ": " + msg1);
+            kmeansLogger = msg1 -> System.out.println("KMeans " + new SimpleDateFormat("(HH:mm:ss)").format(new Date()) + ": " + msg1);
             kmeansLogger.log("Logger not set, will use default");
         }
         kmeansLogger.log(msg);
@@ -135,9 +136,9 @@ public class KMeans<T extends KMeansData> {
 
     private T getClosestCalculatedMeanPointTo(T point) {
         T closest = null;
-        double distanceToClosest = 0;
+        var distanceToClosest = 0.0;
         for (T kMeanPoint : calculatedMeanPoints) {
-            double distance = kMeanPoint.distanceTo(point);
+            var distance = kMeanPoint.distanceTo(point);
             if (closest == null || kMeanPoint.distanceTo(point) < distanceToClosest) {
                 closest = kMeanPoint;
                 distanceToClosest = distance;
@@ -172,14 +173,14 @@ public class KMeans<T extends KMeansData> {
     }
 
     private void updateProgress(double progress) {
-        this.iterationProgress = progress;
+        this.percentProgress = progress;
         if (onUpdate != null) {
             onUpdate.run();
         }
     }
 
     /**
-     * Sets runnable that is called every time iteration is completed. Example case could be reporting iterationProgress on user interface
+     * Sets runnable that is called every time iteration is completed. Example case could be reporting percentProgress on user interface
      * @param runnable runnable that should be called on completion of the iteration
      */
     public void setOnUpdate(Runnable runnable) {
@@ -187,18 +188,18 @@ public class KMeans<T extends KMeansData> {
     }
 
     /**
-     * Gets iterationProgress as a double between 0.0 and 1.0
-     * @return percent iterationProgress
+     * Gets progress as a double between 0.0 and 1.0
+     * @return percentProgress
      */
-    public double getProgress() {
-        return iterationProgress;
+    public double getPercentOfCompletedProgress() {
+        return percentProgress;
     }
 
     /**
-     * Returns calculated KMeans in form of a list. Some results may be null, especially after low amount of iterations.
+     * Returns calculated k-means points in form of a list. Some results may be null, especially after low amount of iterations.
      * @return list with calculated results.
      */
-    public List<T> getResults() {
+    public List<T> getCalculatedMeanPoints() {
         if (!wasIterated) {
             log("Cannot retrieve results before singleIteration!");
             return null;
