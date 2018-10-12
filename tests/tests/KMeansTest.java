@@ -70,7 +70,7 @@ class KMeansTest {
         final int[] updates = {0};
         kMeans.setOnUpdate(() -> {
             updates[0]++;
-            System.out.println(kMeans.getPercentOfCompletedProgress());
+            System.out.println(kMeans.getProgress());
         });
         kMeans.iterate(ITERATION_COUNT);
         assertTrue(updates[0] >= 0);

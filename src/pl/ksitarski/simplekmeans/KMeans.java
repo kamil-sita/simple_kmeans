@@ -14,6 +14,8 @@ public class KMeans<T extends KMeansData> {
     private final List<T> INPUT_POINTS; //points given by user
 
     private List<T> calculatedMeanPoints;
+    private List<KMeansCluster<T>> clusters;
+
     private T genericInstanceCreator; //new instances of T will be created with this instance
 
     private Runnable onUpdate = null; //runnable run after every iteration
@@ -80,10 +82,14 @@ public class KMeans<T extends KMeansData> {
     }
 
     private void singleNonThreadedIteration() {
-        var pointsClosestToMeanPoints = getPointsClosestToLastCalculatedMeanPoints();
+        groupPoints();
+        calculateMeanPoints();
+    }
+
+    private void calculateMeanPoints() {
         calculatedMeanPoints = new ArrayList<>();
-        for (int pointId = 0; pointId < RESULTS_COUNT; pointId++) {
-            T point = getMeanOfListRelatedToPoint(pointId, pointsClosestToMeanPoints);
+        for (var cluster : clusters) {
+            T point = cluster.getMean();
             if (point == null) {
                 point = getNewRandomGenericInstance();
             }
@@ -99,33 +105,23 @@ public class KMeans<T extends KMeansData> {
         kmeansLogger.log(msg);
     }
 
-    private List<T>[] getPointsClosestToLastCalculatedMeanPoints() {
-        List<T>[] pointsClosestToKMeansPoints = initializeEmptyListArrayOfSize(RESULTS_COUNT);
+    private void groupPoints() {
+        clusters = new ArrayList<>();
+
+        for (int i = 0; i < RESULTS_COUNT; i++) {
+            clusters.add(new KMeansCluster<>(calculatedMeanPoints.get(i)));
+        }
 
         for (int i = 0; i < INPUT_POINTS.size(); i++) {
-            var closestKMeanPoint = getClosestCalculatedMeanPointTo(INPUT_POINTS.get(i));
-            int idOfKMeanPoint = getIdOfCalculatedKMeanPoint(closestKMeanPoint);
-            pointsClosestToKMeansPoints[idOfKMeanPoint].add(INPUT_POINTS.get(i));
+            var point = INPUT_POINTS.get(i);
+            var closestMeanPoint = getClosestMeanPointTo(point);
+            var idOfMeanPoint = getIdOfMeanPoint(closestMeanPoint);
+            clusters.get(idOfMeanPoint).addPoint(point);
         }
-
-        return pointsClosestToKMeansPoints;
     }
 
-    private List<T>[] initializeEmptyListArrayOfSize(final int SIZE) {
-        List<T>[] lists = new ArrayList[SIZE];
-        for (int i = 0; i < SIZE; i++) {
-            lists[i] = new ArrayList<>();
-        }
-        return lists;
-    }
 
-    private T getMeanOfListRelatedToPoint(int iteration, List<T>[] lists) {
-        return (T) getNewRandomGenericInstance().meanOfList(
-                (List<KMeansData>) lists[iteration]
-        );
-    }
-
-    private int getIdOfCalculatedKMeanPoint(T point) {
+    private int getIdOfMeanPoint(T point) {
         for (int i = 0; i < calculatedMeanPoints.size(); i++) {
             if (calculatedMeanPoints.get(i).equals(point)) {
                 return i;
@@ -134,7 +130,7 @@ public class KMeans<T extends KMeansData> {
         return -1;
     }
 
-    private T getClosestCalculatedMeanPointTo(T point) {
+    private T getClosestMeanPointTo(T point) {
         T closest = null;
         var distanceToClosest = 0.0;
         for (T kMeanPoint : calculatedMeanPoints) {
@@ -191,7 +187,7 @@ public class KMeans<T extends KMeansData> {
      * Gets progress as a double between 0.0 and 1.0
      * @return percentProgress
      */
-    public double getPercentOfCompletedProgress() {
+    public double getProgress() {
         return percentProgress;
     }
 
