@@ -17,8 +17,6 @@ public class KMeans<T extends KMeansData> {
     private List<T> calculatedMeanPoints;
     private List<KMeansCluster<T>> clusters;
 
-    private T genericInstanceCreator; //new instances of T will be created with this instance
-
     private Runnable onUpdate = null; //runnable run after every iteration
     private double percentProgress = 0;
 
@@ -51,8 +49,6 @@ public class KMeans<T extends KMeansData> {
     }
     
     private void initializeData() {
-        genericInstanceCreator = INPUT_POINTS.get(0);
-        genericInstanceCreator = getNewRandomGenericInstance(); //genericInstanceCreator should not be dependant on given data, so it is instead generated from it.
         initializeRandomlyCalculatedMeanPoints();
         isInitialized = true;
     }
