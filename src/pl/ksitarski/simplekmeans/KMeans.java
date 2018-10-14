@@ -63,11 +63,12 @@ public class KMeans<T extends KMeansData> {
     /**
      * Runs <i>iterationCount</i> iterations of KMeans.
      * @param iterationCount iterations of KMeans.
+     * @return returns this object for easier chaining of methods. Or null if was not initialized properly.
      */
-    public void iterate(int iterationCount) {
+    public KMeans iterate(int iterationCount) {
         if (!isInitialized) {
             log("Was not initialized!");
-            return;
+            return null;
         }
         if (iterationCount <= 0) {
             log("Iteration count cannot be lower or equal 0");
@@ -79,11 +80,28 @@ public class KMeans<T extends KMeansData> {
             updateProgress((i+1)*1.0/iterationCount*1.0);
         }
         wasIterated = true;
+        return this;
     }
 
     private void singleNonThreadedIteration() {
-        groupPoints();
+        groupPointsIntoClusters();
         calculateMeanPoints();
+    }
+
+    private void groupPointsIntoClusters() {
+        initializeClusters();
+        for (T point : INPUT_POINTS) {
+            var closestMeanPoint = getClosestMeanPointTo(point);
+            var idOfMeanPoint = getIdOfMeanPoint(closestMeanPoint);
+            clusters.get(idOfMeanPoint).addPoint(point);
+        }
+    }
+
+    private void initializeClusters() {
+        clusters = new ArrayList<>();
+        for (int i = 0; i < RESULTS_COUNT; i++) {
+            clusters.add(new KMeansCluster<>());
+        }
     }
 
     private void calculateMeanPoints() {
@@ -96,30 +114,6 @@ public class KMeans<T extends KMeansData> {
             calculatedMeanPoints.add(point);
         }
     }
-
-    private static void log(String msg) {
-        if (kmeansLogger == null) {
-            kmeansLogger = msg1 -> System.out.println("KMeans " + new SimpleDateFormat("(HH:mm:ss)").format(new Date()) + ": " + msg1);
-            kmeansLogger.log("Logger not set, will use default");
-        }
-        kmeansLogger.log(msg);
-    }
-
-    private void groupPoints() {
-        clusters = new ArrayList<>();
-
-        for (int i = 0; i < RESULTS_COUNT; i++) {
-            clusters.add(new KMeansCluster<>(calculatedMeanPoints.get(i)));
-        }
-
-        for (int i = 0; i < INPUT_POINTS.size(); i++) {
-            var point = INPUT_POINTS.get(i);
-            var closestMeanPoint = getClosestMeanPointTo(point);
-            var idOfMeanPoint = getIdOfMeanPoint(closestMeanPoint);
-            clusters.get(idOfMeanPoint).addPoint(point);
-        }
-    }
-
 
     private int getIdOfMeanPoint(T point) {
         for (int i = 0; i < calculatedMeanPoints.size(); i++) {
@@ -178,9 +172,11 @@ public class KMeans<T extends KMeansData> {
     /**
      * Sets runnable that is called every time iteration is completed. Example case could be reporting percentProgress on user interface
      * @param runnable runnable that should be called on completion of the iteration
+     * @return this, to make chaining methods easier
      */
-    public void setOnUpdate(Runnable runnable) {
+    public KMeans setOnUpdate(Runnable runnable) {
         this.onUpdate = runnable;
+        return this;
     }
 
     /**
@@ -204,10 +200,26 @@ public class KMeans<T extends KMeansData> {
     }
 
     /**
+     * Returns calculated k-means points in form of a clusters. Some results may be null, especially after low amount of iterations.
+     * @return clusters with calculated results.
+     */
+    public List<KMeansCluster<T>> getClusters() {
+        return clusters;
+    }
+
+    /**
      * Sets logger that implements KMeansLogger interface
      * @param logger logger
      */
     public static void setLogger(KMeansLogger logger) {
         kmeansLogger = logger;
+    }
+
+    private static void log(String msg) {
+        if (kmeansLogger == null) {
+            kmeansLogger = msg1 -> System.err.println("KMeans " + new SimpleDateFormat("(HH:mm:ss)").format(new Date()) + ": " + msg1);
+            kmeansLogger.log("Logger not set, will use default");
+        }
+        kmeansLogger.log(msg);
     }
 }

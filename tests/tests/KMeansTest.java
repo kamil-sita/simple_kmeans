@@ -42,7 +42,7 @@ class KMeansTest {
     @Test
     void learningTest() {
         KMeans<ExampleData> kMeans = getCorrectSample();
-        final int ITERATION_COUNT = 10; //must be at least 1
+        final int ITERATION_COUNT = 5; //must be at least 1
         kMeans.iterate(ITERATION_COUNT);
         List<ExampleData> dataAfterFirstIterations = kMeans.getCalculatedMeanPoints();
         kMeans.iterate(1);
@@ -63,6 +63,7 @@ class KMeansTest {
     }
 
 
+    //checking methods related to feedback
     @Test
     void onUpdateTest() {
         KMeans<ExampleData> kMeans = getCorrectSample();
@@ -74,6 +75,28 @@ class KMeansTest {
         });
         kMeans.iterate(ITERATION_COUNT);
         assertTrue(updates[0] >= 0);
+    }
+
+    //test that checks correctness on  small predefined sample
+    @Test
+    void simplePredefinedSampleTest() {
+        ArrayList<ExampleData> arrayList = new ArrayList<>();
+        arrayList.add(new ExampleData(2, 3));
+        arrayList.add(new ExampleData(1, -1));
+        arrayList.add(new ExampleData(4, 5));
+        System.out.println(arrayList.size());
+        KMeans<ExampleData> kMeans = new KMeans<>(arrayList.size(), arrayList);
+        kMeans.iterate(2);
+        var results = kMeans.getCalculatedMeanPoints();
+        System.out.println("results");
+        for (var result : results) {
+            System.out.println(result);
+        }
+        System.out.println("input");
+        for (var input : arrayList) {
+            System.out.println(input);
+            //assertTrue(results.contains(input));
+        }
 
     }
 

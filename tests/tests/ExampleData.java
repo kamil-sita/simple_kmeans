@@ -33,7 +33,6 @@ public class ExampleData implements KMeansData {
 
     @Override
     public KMeansData meanOfList(List<KMeansData> data) {
-        ExampleData output = new ExampleData();
         double value = 0;
         double value2 = 0;
         for (KMeansData datum : data) {
@@ -42,22 +41,21 @@ public class ExampleData implements KMeansData {
         }
         value /= data.size();
         value2 /= data.size();
-        output.setData(value, value2);
-        return output;
+        return new ExampleData(value, value2);
     }
 
     public ExampleData() {
         setRandomData();
     }
 
+    public ExampleData(double val1, double val2) {
+        this.value1 = val1;
+        this.value2 = val2;
+    }
+
     public void setRandomData() {
         value1 = getRandomDouble();
         value2 = getRandomDouble();
-    }
-
-    public void setData(double value, double value2) {
-        this.value1 = value;
-        this.value2 = value2;
     }
 
     public double getValue1() {
@@ -68,11 +66,27 @@ public class ExampleData implements KMeansData {
         return value1;
     }
 
+    @Override
+    public String toString() {
+        return "ExampleData: " + value1 + ", " + value2;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (o instanceof ExampleData) {
+            var o1 = (ExampleData) o;
+            return this.value1 == o1.value1 && this.value2 == o1.value2;
+        }
+        return false;
+    }
+
 
     private static Random random;
+
     private static double getRandomDouble() {
         if (random == null) random = new Random(32); //constant seed for consistent testing
-        return random.nextDouble() * 10.0;
+        return random.nextDouble() * 100.0 - 50.0;
     }
 
 

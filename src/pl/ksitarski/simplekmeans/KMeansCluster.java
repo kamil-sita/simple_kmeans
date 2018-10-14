@@ -8,22 +8,26 @@ public class KMeansCluster<T extends KMeansData> {
     private List<T> points;
     private T meanPoint;
 
-    public KMeansCluster(T meanPoint) {
-        this.meanPoint = meanPoint;
+    KMeansCluster() {
         points = new ArrayList<>();
     }
 
-    public void addPoint(T point) {
+    void addPoint(T point) {
         points.add(point);
     }
 
     public T getMean() {
+        if (meanPoint != null) return meanPoint;
         if (points.size() == 0) {
             return null;
         }
-        return (T) points.get(0).meanOfList((List<KMeansData>) points);
+        meanPoint =  (T) points.get(0).meanOfList((List<KMeansData>) points);
+        return meanPoint;
     }
 
+    public List<T> getPoints() {
+        return points;
+    }
 
 
 }
