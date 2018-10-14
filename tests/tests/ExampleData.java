@@ -10,12 +10,6 @@ public class ExampleData implements KMeansData {
     private double value1;
     private double value2;
 
-    @Override
-    public KMeansData getNewWithRandomData() {
-        ExampleData exampleData = new ExampleData();
-        KMeansData KMeansData = exampleData;
-        return KMeansData;
-    }
 
     @Override
     public double distanceTo(KMeansData KMeansData) {
@@ -36,8 +30,10 @@ public class ExampleData implements KMeansData {
         double value = 0;
         double value2 = 0;
         for (KMeansData datum : data) {
-            value += ((ExampleData) datum).getValue1();
-            value2 += ((ExampleData) datum).getValue2();
+            var dt = ((ExampleData) datum).getValue1();
+            var dt2= ((ExampleData) datum).getValue2();
+            value += dt;
+            value2 += dt2;
         }
         value /= data.size();
         value2 /= data.size();
@@ -63,7 +59,7 @@ public class ExampleData implements KMeansData {
     }
 
     public double getValue2() {
-        return value1;
+        return value2;
     }
 
     @Override

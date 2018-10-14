@@ -84,18 +84,27 @@ class KMeansTest {
         arrayList.add(new ExampleData(2, 3));
         arrayList.add(new ExampleData(1, -1));
         arrayList.add(new ExampleData(4, 5));
-        System.out.println(arrayList.size());
+        arrayList.add(new ExampleData(-2, 0));
+        arrayList.add(new ExampleData(54, -65));
+        arrayList.add(new ExampleData(33, 54));
         KMeans<ExampleData> kMeans = new KMeans<>(arrayList.size(), arrayList);
-        kMeans.iterate(2);
+        kMeans.iterate(50);
         var results = kMeans.getCalculatedMeanPoints();
-        System.out.println("results");
+
+
+        System.out.println("Input:");
+        for (var input : arrayList) {
+            System.out.println(input);
+        }
+
+        System.out.println("Results:");
         for (var result : results) {
             System.out.println(result);
         }
-        System.out.println("input");
+
+
         for (var input : arrayList) {
-            System.out.println(input);
-            //assertTrue(results.contains(input));
+            assertTrue(results.contains(input));
         }
 
     }

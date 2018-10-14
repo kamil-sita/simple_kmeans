@@ -4,12 +4,6 @@ import java.util.List;
 
 public interface KMeansData {
     /**
-     * This method should return new instance of KMeansData initialized with random values. Will be used to generate
-     * @return new instance of KMeansData initialized with random values
-     */
-    KMeansData getNewWithRandomData();
-
-    /**
      * Should return distance between this and kMeansData object, following rules of metric space (preferably euclidan space: sqrt(a^2+b^2+...z^2))
      * @param kMeansData other kMeansData object
      * @return distance

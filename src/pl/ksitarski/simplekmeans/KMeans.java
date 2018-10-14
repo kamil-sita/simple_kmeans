@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class KMeans<T extends KMeansData> {
 
@@ -30,6 +31,9 @@ public class KMeans<T extends KMeansData> {
      * @param inputPoints input points in list. Cannot be null or empty.
      */
     public KMeans(int resultsCount, List<T> inputPoints) {
+        if (resultsCount > inputPoints.size()) {
+            log("Results count is bigger than inputPoints size. This might cause some problems with calculations.");
+        }
         this.RESULTS_COUNT = resultsCount;
         if (inputPoints == null) {
             log("inputPoints cannot be null!");
@@ -138,7 +142,8 @@ public class KMeans<T extends KMeansData> {
     }
 
     private T getNewRandomGenericInstance() {
-        return (T) genericInstanceCreator.getNewWithRandomData();
+        int random = ThreadLocalRandom.current().nextInt(0, INPUT_POINTS.size());
+        return INPUT_POINTS.get(random);
     }
 
     private void checkIsDataCorrect() {
