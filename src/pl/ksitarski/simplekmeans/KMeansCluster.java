@@ -25,8 +25,20 @@ public class KMeansCluster<T extends KMeansData> {
         return meanPoint;
     }
 
+    double getDeviation() {
+        double sum = 0;
+        for (var point : points) {
+            sum += meanPoint.distanceTo(point);
+        }
+        return sum/getSize();
+    }
+
     public List<T> getPoints() {
         return points;
+    }
+
+    int getSize() {
+        return points.size();
     }
 
 

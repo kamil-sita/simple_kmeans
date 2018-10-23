@@ -16,7 +16,7 @@ class KMeansTest {
      */
 
     private final int COUNT = 10; //must be bigger than 1
-    private final int BIG_COUNT = 2000; //should be bigger than 100
+    private final int BIG_COUNT = 20000; //should be bigger than 100
 
     ///checking whether initialization with good values works and with bad values doesn't
     @Test
@@ -52,12 +52,11 @@ class KMeansTest {
 
 
     @Test
-    void longTest() {
+    void bigSampleTest() {
         KMeans<ExampleData> kMeans = getBigCorrectSample();
-        final int ITERATION_COUNT = 1000; //must be at least 1
-        kMeans.iterate(ITERATION_COUNT);
+        kMeans.iterate(5);
         List<ExampleData> afterInitial = kMeans.getCalculatedMeanPoints();
-        kMeans.iterate(1);
+        kMeans.iterate(10);
         List<ExampleData> afterAdditional = kMeans.getCalculatedMeanPoints();
         assertTrue(doListsDiffer(afterInitial, afterAdditional));
     }

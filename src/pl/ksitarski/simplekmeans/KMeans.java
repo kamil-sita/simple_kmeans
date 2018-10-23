@@ -208,6 +208,22 @@ public class KMeans<T extends KMeansData> {
         return clusters;
     }
 
+
+    double getDeviation() { //method for possible another function of this library, selecting best fit after few different attempts
+        if (calculatedMeanPoints == null) return Double.POSITIVE_INFINITY;
+
+        double sum = 0;
+        int weight = 0;
+
+        for (var cluster : clusters) {
+            sum += cluster.getDeviation() * cluster.getSize();
+            weight += cluster.getSize();
+        }
+
+        return sum/weight;
+    }
+
+
     /**
      * Sets logger that implements KMeansLogger interface
      * @param logger logger
