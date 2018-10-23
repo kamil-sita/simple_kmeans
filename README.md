@@ -18,16 +18,6 @@ public class RgbKmeansContainer implements SimpleKMeansData {
     }
 
     @Override
-    //returns new random rgb
-    public SimpleKMeansData getNewWithRandomData() {
-        return new RgbKmeansContainer(new RGB(
-                (int) (Math.random() * 255),
-                (int) (Math.random() * 255),
-                (int) (Math.random() * 255)
-        ));
-    }
-
-    @Override
     //calculates distance to other object of this same type
     public double distanceTo(SimpleKMeansData KMeansData) {
         return rgbValue.getDistanceFrom(((RgbKmeansContainer) KMeansData).rgbValue);
