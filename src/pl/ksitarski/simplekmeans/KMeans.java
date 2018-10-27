@@ -23,6 +23,8 @@ public class KMeans<T extends KMeansData> {
     private boolean isInitialized = false;
     private boolean wasIterated = false;
 
+    private volatile boolean canContinue = true;
+
     /**
      * Constructor of KMeans object
      * @param resultsCount expected number of results. Must be higher or equal to 1.
@@ -76,6 +78,9 @@ public class KMeans<T extends KMeansData> {
         }
         updateProgress(0);
         for (int i = 0; i < iterationCount; i++) {
+            if (!canContinue) {
+                return this;
+            }
             singleNonThreadedIteration();
             updateProgress((i+1)*1.0/iterationCount*1.0);
         }
@@ -206,6 +211,13 @@ public class KMeans<T extends KMeansData> {
      */
     public List<KMeansCluster<T>> getClusters() {
         return clusters;
+    }
+
+    /**
+     * Aborts execution of kmeans after current iteration.
+     */
+    public void abort() {
+        canContinue = false;
     }
 
 
