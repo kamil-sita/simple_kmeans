@@ -5,6 +5,8 @@ import pl.ksitarski.simplekmeans.KMeans;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,6 +19,7 @@ class KMeansTest {
 
     private final int COUNT = 10; //must be bigger than 1
     private final int BIG_COUNT = 20000; //should be bigger than 100
+    private final int THREAD_COUNT = 4;
 
     ///checking whether initialization with good values works and with bad values doesn't
     @Test
@@ -105,6 +108,40 @@ class KMeansTest {
         for (var input : arrayList) {
             assertTrue(results.contains(input));
         }
+
+    }
+
+
+    @Test
+    void simplePredefinedSampleTestThreads() {
+        ArrayList<ExampleData> arrayList = new ArrayList<>();
+        arrayList.add(new ExampleData(2, 3));
+        arrayList.add(new ExampleData(1, -1));
+        arrayList.add(new ExampleData(4, 5));
+        arrayList.add(new ExampleData(-2, 0));
+        arrayList.add(new ExampleData(54, -65));
+        arrayList.add(new ExampleData(33, 54));
+        ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
+        KMeans<ExampleData> kMeans = new KMeans<>(arrayList.size(), arrayList, executorService);
+        kMeans.iterate(50);
+        var results = kMeans.getCalculatedMeanPoints();
+
+
+        System.out.println("Input:");
+        for (var input : arrayList) {
+            System.out.println(input);
+        }
+
+        System.out.println("Results:");
+        for (var result : results) {
+            System.out.println(result);
+        }
+
+
+        for (var input : arrayList) {
+            assertTrue(results.contains(input));
+        }
+        executorService.shutdown();
 
     }
 

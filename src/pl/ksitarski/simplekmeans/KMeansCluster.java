@@ -1,6 +1,7 @@
 package pl.ksitarski.simplekmeans;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class KMeansCluster<T extends KMeansData> {
@@ -8,8 +9,13 @@ public class KMeansCluster<T extends KMeansData> {
     private List<T> points;
     private T meanPoint;
 
-    KMeansCluster() {
-        points = new ArrayList<>();
+    KMeansCluster(boolean threaded) {
+        if (threaded) {
+            points = Collections.synchronizedList(new ArrayList<>());
+        } else {
+            points = new ArrayList<>();
+        }
+
     }
 
     void addPoint(T point) {

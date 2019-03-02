@@ -1,7 +1,7 @@
 # simple_kmeans
 **simple_kmeans** is easy to use Java KMeans library.
 
-### usage
+## usage
 Using **simple_kmeans** library is very easy (huh): 
 1. Compile source or download latest version from releases tab.
 2. Put it into external libraries in your IDE of choice.
@@ -57,3 +57,14 @@ kMeans.setOnUpdate(() ->
 ```
 
 GiveFeedbackToUser.updateProgress(double) will be called on every iteration of kMeans.
+
+## multithreading
+Should you want to speed up the calculations, you can create KMeans object with ExecutorService object:
+
+```
+ExecutorService exec = Executors.newFixedThreadPool(4);
+KMeans<RgbKmeansContainer> kMeans = new KMeans(32, rgbList, exec);
+kMeans.iterate(1000);
+List<RgbKmeansContainer> results = kMeans.getResults();
+exec.shutdown();
+```

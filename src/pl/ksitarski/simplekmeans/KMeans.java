@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class KMeans<T extends KMeansData> {
@@ -23,7 +25,20 @@ public class KMeans<T extends KMeansData> {
     private boolean isInitialized = false;
     private boolean wasIterated = false;
 
+    private ExecutorService executorService = null;
+
     private volatile boolean canContinue = true;
+
+    /**
+     * Constructor of KMeans object
+     * @param resultsCount expected number of results. Must be higher or equal to 1.
+     * @param inputPoints input points in list. Cannot be null or empty.
+     * @param executorService executor service if you want to to be done multithreaded
+     */
+    public KMeans(int resultsCount, List<T> inputPoints, ExecutorService executorService) {
+        this(resultsCount, inputPoints);
+        this.executorService = executorService;
+    }
 
     /**
      * Constructor of KMeans object
@@ -81,20 +96,46 @@ public class KMeans<T extends KMeansData> {
             if (!canContinue) {
                 return this;
             }
-            singleNonThreadedIteration();
+            singleIteration();
             updateProgress((i+1)*1.0/iterationCount*1.0);
         }
         wasIterated = true;
         return this;
     }
 
-    private void singleNonThreadedIteration() {
+    private void singleIteration() {
         groupPointsIntoClusters();
         calculateMeanPoints();
     }
 
     private void groupPointsIntoClusters() {
-        initializeClusters();
+        if (executorService == null) {
+            groupPointsIntoClustersNoThreads();
+        } else {
+            groupPointsIntoClustersThreads();
+        }
+    }
+
+    private void groupPointsIntoClustersThreads() {
+        CountDownLatch countDownLatch = new CountDownLatch(INPUT_POINTS.size());
+        initializeClusters(true);
+        for (T point : INPUT_POINTS) {
+            executorService.submit(() -> {
+                var closestMeanPoint = getClosestMeanPointTo(point);
+                var idOfMeanPoint = getIdOfMeanPoint(closestMeanPoint);
+                clusters.get(idOfMeanPoint).addPoint(point);
+                countDownLatch.countDown();
+            });
+        }
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void groupPointsIntoClustersNoThreads() {
+        initializeClusters(false);
         for (T point : INPUT_POINTS) {
             var closestMeanPoint = getClosestMeanPointTo(point);
             var idOfMeanPoint = getIdOfMeanPoint(closestMeanPoint);
@@ -102,10 +143,10 @@ public class KMeans<T extends KMeansData> {
         }
     }
 
-    private void initializeClusters() {
+    private void initializeClusters(boolean threaded) {
         clusters = new ArrayList<>(RESULTS_COUNT);
         for (int i = 0; i < RESULTS_COUNT; i++) {
-            clusters.add(new KMeansCluster<>());
+            clusters.add(new KMeansCluster<>(threaded));
         }
     }
 
