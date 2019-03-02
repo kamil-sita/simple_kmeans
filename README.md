@@ -2,10 +2,10 @@
 **simple_kmeans** is easy to use Java KMeans library.
 
 ### usage
-Using **simple_kmeans** library is very easy: 
+Using **simple_kmeans** library is very easy (huh): 
 1. Compile source or download latest version from releases tab.
 2. Put it into external libraries in your IDE of choice.
-3. You need to create data container that implements SimpleKMeansData interface. Example of implementation (from my other project):
+3. Create data container that implements SimpleKMeansData interface. Example of implementation (from my other project):
 
 ```
 public class RgbKmeansContainer implements SimpleKMeansData {
@@ -49,7 +49,7 @@ kMeans.iterate(1000);
 List<RgbKmeansContainer> results = kMeans.getResults();
 ```
 
-5. In case you wanted to inform user of any updates you can use this construct:
+5. If you need to update user with information or get constant progress updates your can use setOnUpdate() function:
 
 ```
 kMeans.setOnUpdate(() ->

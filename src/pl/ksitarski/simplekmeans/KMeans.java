@@ -56,7 +56,7 @@ public class KMeans<T extends KMeansData> {
     }
 
     private void initializeRandomlyCalculatedMeanPoints() {
-        calculatedMeanPoints = new ArrayList<>();
+        calculatedMeanPoints = new ArrayList<>(RESULTS_COUNT);
         for (int i = 0; i < RESULTS_COUNT; i++) {
             calculatedMeanPoints.add(getNewRandomGenericInstance());
         }
@@ -103,14 +103,14 @@ public class KMeans<T extends KMeansData> {
     }
 
     private void initializeClusters() {
-        clusters = new ArrayList<>();
+        clusters = new ArrayList<>(RESULTS_COUNT);
         for (int i = 0; i < RESULTS_COUNT; i++) {
             clusters.add(new KMeansCluster<>());
         }
     }
 
     private void calculateMeanPoints() {
-        calculatedMeanPoints = new ArrayList<>();
+        calculatedMeanPoints = new ArrayList<>(RESULTS_COUNT);
         for (var cluster : clusters) {
             T point = cluster.getMean();
             if (point == null) {
@@ -121,12 +121,7 @@ public class KMeans<T extends KMeansData> {
     }
 
     private int getIdOfMeanPoint(T point) {
-        for (int i = 0; i < calculatedMeanPoints.size(); i++) {
-            if (calculatedMeanPoints.get(i).equals(point)) {
-                return i;
-            }
-        }
-        return -1;
+        return calculatedMeanPoints.indexOf(point);
     }
 
     private T getClosestMeanPointTo(T point) {
@@ -134,7 +129,7 @@ public class KMeans<T extends KMeansData> {
         var distanceToClosest = 0.0;
         for (T kMeanPoint : calculatedMeanPoints) {
             var distance = kMeanPoint.distanceTo(point);
-            if (closest == null || kMeanPoint.distanceTo(point) < distanceToClosest) {
+            if (closest == null || distance < distanceToClosest) {
                 closest = kMeanPoint;
                 distanceToClosest = distance;
             }
@@ -221,7 +216,10 @@ public class KMeans<T extends KMeansData> {
     }
 
 
-    double getDeviation() { //method for possible another function of this library, selecting best fit after few different attempts
+    /**
+     * Calculatese deviation for current cluster
+     */
+    public double getDeviation() {
         if (calculatedMeanPoints == null) return Double.POSITIVE_INFINITY;
 
         double sum = 0;
