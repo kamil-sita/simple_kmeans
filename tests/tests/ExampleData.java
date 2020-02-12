@@ -1,44 +1,11 @@
 package tests;
 
-import pl.ksitarski.simplekmeans.KMeansData;
-
-import java.util.List;
 import java.util.Random;
 
-public class ExampleData implements KMeansData {
+public class ExampleData {
 
     private double value1;
     private double value2;
-
-
-    @Override
-    public double distanceTo(KMeansData KMeansData) {
-        ExampleData exampleData = (ExampleData) KMeansData;
-        return sqrt(square(value1 - exampleData.getValue1()) + square(value2 - exampleData.getValue2()));
-    }
-
-    private double square(double value) {
-        return value * value;
-    }
-
-    private double sqrt(double value) {
-        return Math.sqrt(value);
-    }
-
-    @Override
-    public KMeansData meanOfList(List<KMeansData> data) {
-        double value = 0;
-        double value2 = 0;
-        for (KMeansData datum : data) {
-            var dt = ((ExampleData) datum).getValue1();
-            var dt2= ((ExampleData) datum).getValue2();
-            value += dt;
-            value2 += dt2;
-        }
-        value /= data.size();
-        value2 /= data.size();
-        return new ExampleData(value, value2);
-    }
 
     public ExampleData() {
         setRandomData();
@@ -76,7 +43,6 @@ public class ExampleData implements KMeansData {
         }
         return false;
     }
-
 
     private static Random random;
 

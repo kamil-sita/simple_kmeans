@@ -1,73 +1,40 @@
 package pl.ksitarski.simplekmeans;
+import java.util.*;
+import java.util.concurrent.*;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadLocalRandom;
+public class KMeans<T> {
 
-public class KMeans<T extends KMeansData> {
-
-    private static KMeansLogger kmeansLogger;
-
-    private final int RESULTS_COUNT; //number of expected results
-    private final List<T> INPUT_POINTS; //points given by user
+    private final KMeansBuilder.Arguments<T> arguments;
 
     private List<T> calculatedMeanPoints;
     private List<KMeansCluster<T>> clusters;
 
-    private Runnable onUpdate = null; //runnable run after every iteration
     private double percentProgress = 0;
 
-    private boolean isInitialized = false;
     private boolean wasIterated = false;
 
     private ExecutorService executorService = null;
 
     private volatile boolean canContinue = true;
 
-    /**
-     * Constructor of KMeans object
-     * @param resultsCount expected number of results. Must be higher or equal to 1.
-     * @param inputPoints input points in list. Cannot be null or empty.
-     * @param executorService executor service if you want to to be done multithreaded
-     */
-    public KMeans(int resultsCount, List<T> inputPoints, ExecutorService executorService) {
-        this(resultsCount, inputPoints);
-        this.executorService = executorService;
-    }
+    private int estimatedCapacityPerCluster;
 
-    /**
-     * Constructor of KMeans object
-     * @param resultsCount expected number of results. Must be higher or equal to 1.
-     * @param inputPoints input points in list. Cannot be null or empty.
-     */
-    public KMeans(int resultsCount, List<T> inputPoints) {
-        if (resultsCount > inputPoints.size()) {
-            log("Results count is bigger than inputPoints size. This might cause some problems with calculations.");
-        }
-        this.RESULTS_COUNT = resultsCount;
-        if (inputPoints == null) {
-            log("inputPoints cannot be null!");
-            this.INPUT_POINTS = null;
-            return;
-        }
-        this.INPUT_POINTS = Collections.unmodifiableList(inputPoints);
-        try {
-            checkIsDataCorrect();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        initializeData();
-    }
-    
-    private void initializeData() {
+    private boolean firstOptimizedRun = true;
+    private double[] oldLengths;
+    private int[] oldIndexes;
+    private double lastStdDev;
+    private int notCounted = 0;
+    private int counted = 0;
+
+    private final int INPUT_POINTS_COUNT;
+    private final int RESULTS_COUNT;
+
+    KMeans(KMeansBuilder.Arguments<T> args) {
+        this.arguments = args;
+        this.INPUT_POINTS_COUNT = args.getInputPoints().size();
+        this.RESULTS_COUNT = args.getResultCount();
         initializeRandomlyCalculatedMeanPoints();
-        isInitialized = true;
+        estimatedCapacityPerCluster = (int) (1.2 * INPUT_POINTS_COUNT/RESULTS_COUNT);
     }
 
     private void initializeRandomlyCalculatedMeanPoints() {
@@ -80,32 +47,109 @@ public class KMeans<T extends KMeansData> {
     /**
      * Runs <i>iterationCount</i> iterations of KMeans.
      * @param iterationCount iterations of KMeans.
-     * @return returns this object for easier chaining of methods. Or null if was not initialized properly.
+     * @return returns this object for easier chaining of methods.
      */
-    public KMeans iterate(int iterationCount) {
-        if (!isInitialized) {
-            log("Was not initialized!");
-            return null;
-        }
+    public KMeans<T> iterate(int iterationCount) {
         if (iterationCount <= 0) {
-            log("Iteration count cannot be lower or equal 0");
             throw new IllegalArgumentException("Iteration count cannot be lower or equal 0, is: " + iterationCount);
         }
-        updateProgress(0);
-        for (int i = 0; i < iterationCount; i++) {
-            if (!canContinue) {
-                return this;
+        try {
+            setupIteration();
+            for (int i = 0; i < iterationCount; i++) {
+                if (!canContinue) {
+                    break;
+                }
+                singleIteration();
+                wasIterated = true;
+                updateProgress((i+1)*1.0/iterationCount*1.0);
             }
-            singleIteration();
-            updateProgress((i+1)*1.0/iterationCount*1.0);
+            return this;
+        } finally {
+            stopIteration();
         }
-        wasIterated = true;
-        return this;
+    }
+
+    /**
+     * Iterates until standard deviation delta is smaller than given delta. In this mode progress percentage is approximation.
+     * @param delta minimum difference between the standard deviation of two consecutive iterations that causes execution to stop
+     * @return this object for easier chaining of methods.
+     */
+    public KMeans<T> iterateUntilStandardDeviationDeltaSmallerOrEqualTo(double delta) {
+        return iterateUntilStandardDeviationDeltaSmallerOrEqualTo(delta, 0);
+    }
+
+    /**
+     * Iterates until standard deviation delta is smaller than given delta. In this mode progress percentage is approximation.
+     * @param delta minimum difference between the standard deviation of two consecutive iterations that causes execution to stop
+     * @param iterationCountSafeguard maximum number of iterations. Numbers below 1 are ignored.
+     * @return this object for easier chaining of methods.
+     */
+    public KMeans<T> iterateUntilStandardDeviationDeltaSmallerOrEqualTo(double delta, int iterationCountSafeguard) {
+        try {
+            setupIteration();
+            double lastStdDev = Double.MAX_VALUE;
+            boolean iterate = true;
+            int iterationsDone = 0;
+            while (iterate) {
+                if (!canContinue) {
+                    break;
+                }
+                singleIteration();
+                wasIterated = true;
+                double stdDev = getStandardDeviation();
+                double currentDelta = lastStdDev - stdDev;
+                iterationsDone++;
+
+                if (currentDelta < delta || (iterationsDone >= iterationCountSafeguard && iterationCountSafeguard > 0)) {
+                    iterate = false;
+                }
+
+                //aproximate progress
+                double invertedTargetDelta = 1/delta;
+                double currentInvertedDelta = 1/currentDelta;
+
+                double progress = currentInvertedDelta/invertedTargetDelta;
+                if (progress > 1) progress = 1;
+
+                updateProgress(progress);
+                lastStdDev = stdDev;
+            }
+            return this;
+        } finally {
+            stopIteration();
+        }
+    }
+
+
+    private void setupIteration() {
+        canContinue = true;
+        updateProgress(0);
+        if (arguments.isMultithreaded()) {
+            executorService = Executors.newFixedThreadPool(arguments.getThreadsMax());
+        }
+    }
+
+
+    private void stopIteration() {
+        if (arguments.isMultithreaded() && executorService != null) {
+            executorService.shutdown();
+        }
     }
 
     private void singleIteration() {
+        if (arguments.isDontUpdateAllOptimization()) {
+            if (firstOptimizedRun) {
+                oldLengths = new double[INPUT_POINTS_COUNT];
+                oldIndexes = new int[INPUT_POINTS_COUNT];
+            } else {
+                lastStdDev = getStandardDeviation();
+            }
+        }
         groupPointsIntoClusters();
         calculateMeanPoints();
+        if (arguments.isDontUpdateAllOptimization()) {
+            firstOptimizedRun = false;
+        }
     }
 
     private void groupPointsIntoClusters() {
@@ -117,15 +161,30 @@ public class KMeans<T extends KMeansData> {
     }
 
     private void groupPointsIntoClustersThreads() {
-        CountDownLatch countDownLatch = new CountDownLatch(INPUT_POINTS.size());
+        final CountDownLatch countDownLatch = new CountDownLatch(arguments.getThreadsMax());
+        final int threadCount = arguments.getThreadsMax();
+
         initializeClusters(true);
-        for (T point : INPUT_POINTS) {
-            executorService.submit(() -> {
-                var closestMeanPoint = getClosestMeanPointTo(point);
-                var idOfMeanPoint = getIdOfMeanPoint(closestMeanPoint);
-                clusters.get(idOfMeanPoint).addPoint(point);
-                countDownLatch.countDown();
-            });
+
+        final int workPerThread = INPUT_POINTS_COUNT/threadCount;
+        final int mostThreadsWork = workPerThread * (threadCount - 1);
+        final int lastThreadWork = INPUT_POINTS_COUNT - mostThreadsWork;
+        int workDistributed = 0;
+
+        for (int i = 0; i < threadCount; i++) {
+            int finalWorkDistributed = workDistributed;
+            if (i + 1 != threadCount) { //not last thread
+                executorService.submit(() -> {
+                    calculatePartial(finalWorkDistributed, finalWorkDistributed + workPerThread);
+                    countDownLatch.countDown();
+                });
+            } else {
+                executorService.submit(() -> {
+                    calculatePartial(finalWorkDistributed, finalWorkDistributed + lastThreadWork);
+                    countDownLatch.countDown();
+                });
+            }
+            workDistributed += workPerThread;
         }
         try {
             countDownLatch.await();
@@ -134,19 +193,43 @@ public class KMeans<T extends KMeansData> {
         }
     }
 
+
+    private void calculatePartial(int from, int to) {
+        for (int i = from; i < to; i++) {
+            var point = arguments.getInputPoints().get(i);
+            counted++;
+
+            if (arguments.isDontUpdateAllOptimization() && !firstOptimizedRun) {
+                if (oldLengths[i] < lastStdDev) {
+                    var closestMeanPoint = oldIndexes[i];
+                    double length = arguments.getDataLength().getLength(calculatedMeanPoints.get(closestMeanPoint), point);
+                    clusters.get(oldIndexes[i]).addPoint(arguments.getInputPoints().get(i), length);
+                    oldLengths[i] = length;
+                    notCounted++;
+                    continue;
+                }
+            }
+
+            var pointAndLength = getClosestMeanPointTo(point);
+            var idOfMeanPoint = getIdOfMeanPoint(pointAndLength.t);
+            clusters.get(idOfMeanPoint).addPoint(point, pointAndLength.length);
+
+            if (arguments.isDontUpdateAllOptimization()) {
+                oldLengths[i] = pointAndLength.length;
+                oldIndexes[i] = idOfMeanPoint;
+            }
+        }
+    }
+
     private void groupPointsIntoClustersNoThreads() {
         initializeClusters(false);
-        for (T point : INPUT_POINTS) {
-            var closestMeanPoint = getClosestMeanPointTo(point);
-            var idOfMeanPoint = getIdOfMeanPoint(closestMeanPoint);
-            clusters.get(idOfMeanPoint).addPoint(point);
-        }
+        calculatePartial(0, INPUT_POINTS_COUNT);
     }
 
     private void initializeClusters(boolean threaded) {
         clusters = new ArrayList<>(RESULTS_COUNT);
         for (int i = 0; i < RESULTS_COUNT; i++) {
-            clusters.add(new KMeansCluster<>(threaded));
+            clusters.add(new KMeansCluster<>(threaded, estimatedCapacityPerCluster, arguments.getDataToMean()));
         }
     }
 
@@ -165,60 +248,40 @@ public class KMeans<T extends KMeansData> {
         return calculatedMeanPoints.indexOf(point);
     }
 
-    private T getClosestMeanPointTo(T point) {
+    private PointAndLength<T> getClosestMeanPointTo(T point) {
         T closest = null;
         var distanceToClosest = 0.0;
         for (T kMeanPoint : calculatedMeanPoints) {
-            var distance = kMeanPoint.distanceTo(point);
+            var distance = arguments.getDataLength().getLength(kMeanPoint, point);
             if (closest == null || distance < distanceToClosest) {
                 closest = kMeanPoint;
                 distanceToClosest = distance;
             }
         }
-        return closest;
+        return new PointAndLength<>(closest, distanceToClosest);
+    }
+
+    private static class PointAndLength<T> {
+        T t;
+        double length;
+
+        public PointAndLength(T t, double length) {
+            this.t = t;
+            this.length = length;
+        }
     }
 
     private T getNewRandomGenericInstance() {
-        int random = ThreadLocalRandom.current().nextInt(0, INPUT_POINTS.size());
-        return INPUT_POINTS.get(random);
+        int random = ThreadLocalRandom.current().nextInt(0, INPUT_POINTS_COUNT);
+        return arguments.getInputPoints().get(random);
     }
 
-    private void checkIsDataCorrect() {
-        if (RESULTS_COUNT <= 0) {
-            throw new IllegalArgumentException("resultsCount cannot be lower or equal to zero");
-        }
-        if (INPUT_POINTS == null) {
-            throw new IllegalArgumentException("Data points list cannot be null");
-        }
-        if (INPUT_POINTS.size() == 0) {
-            throw new IllegalArgumentException("Data points list cannot be empty");
-        }
-        for (T point : INPUT_POINTS) {
-            if (point == null) {
-                throw new IllegalArgumentException("Data point cannot be null");
-            }
-        }
-    }
-
-    public boolean isInitialized() {
-        return isInitialized;
-    }
 
     private void updateProgress(double progress) {
         this.percentProgress = progress;
-        if (onUpdate != null) {
-            onUpdate.run();
+        if (arguments.getOnUpdate() != null) {
+            arguments.getOnUpdate().onUpdate(progress);
         }
-    }
-
-    /**
-     * Sets runnable that is called every time iteration is completed. Example case could be reporting percentProgress on user interface
-     * @param runnable runnable that should be called on completion of the iteration
-     * @return this, to make chaining methods easier
-     */
-    public KMeans setOnUpdate(Runnable runnable) {
-        this.onUpdate = runnable;
-        return this;
     }
 
     /**
@@ -235,8 +298,7 @@ public class KMeans<T extends KMeansData> {
      */
     public List<T> getCalculatedMeanPoints() {
         if (!wasIterated) {
-            log("Cannot retrieve results before singleIteration!");
-            return null;
+            throw new RuntimeException("Cannot get results before iterating");
         }
         return calculatedMeanPoints;
     }
@@ -250,44 +312,26 @@ public class KMeans<T extends KMeansData> {
     }
 
     /**
-     * Aborts execution of kmeans after current iteration.
+     * Aborts execution of k-means algorithm after current iteration.
      */
-    public void abort() {
+    public void earlyStop() {
         canContinue = false;
     }
-
 
     /**
      * Calculatese deviation for current cluster
      */
-    public double getDeviation() {
+    public double getStandardDeviation() {
         if (calculatedMeanPoints == null) return Double.POSITIVE_INFINITY;
 
         double sum = 0;
         int weight = 0;
 
         for (var cluster : clusters) {
-            sum += cluster.getDeviation() * cluster.getSize();
+            sum += cluster.getStandardDeviation() * cluster.getSize();
             weight += cluster.getSize();
         }
 
         return sum/weight;
-    }
-
-
-    /**
-     * Sets logger that implements KMeansLogger interface
-     * @param logger logger
-     */
-    public static void setLogger(KMeansLogger logger) {
-        kmeansLogger = logger;
-    }
-
-    private static void log(String msg) {
-        if (kmeansLogger == null) {
-            kmeansLogger = msg1 -> System.err.println("KMeans " + new SimpleDateFormat("(HH:mm:ss)").format(new Date()) + ": " + msg1);
-            kmeansLogger.log("Logger not set, will use default");
-        }
-        kmeansLogger.log(msg);
     }
 }
