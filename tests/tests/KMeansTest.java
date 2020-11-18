@@ -39,7 +39,6 @@ class KMeansTest {
         assertTrue(doListsDiffer(dataAfterFirstIterations, dataAfterLaterIterations));
     }
 
-
     @Test
     void bigSampleTest() {
         var kMeans = new KMeansBuilder<>(getBigCorrectSample(), COUNT, getDataToMean(), getDataLength()).build();
