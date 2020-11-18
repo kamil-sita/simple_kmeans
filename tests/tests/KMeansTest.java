@@ -26,19 +26,6 @@ class KMeansTest {
         assertTrue(atLeastOneNotNullInList(data));
     }
 
-
-    //checking whether results actually differ between iterations
-    @Test
-    void learningTest() {
-        var kMeans = new KMeansBuilder<>(getCorrectSample(), COUNT, getDataToMean(), getDataLength()).build();
-        final int ITERATION_COUNT = 5; //must be at least 1
-        kMeans.iterate(ITERATION_COUNT);
-        List<ExampleData> dataAfterFirstIterations = kMeans.getCalculatedMeanPoints();
-        kMeans.iterate(1);
-        List<ExampleData> dataAfterLaterIterations = kMeans.getCalculatedMeanPoints();
-        assertTrue(doListsDiffer(dataAfterFirstIterations, dataAfterLaterIterations));
-    }
-
     @Test
     void bigSampleTest() {
         var kMeans = new KMeansBuilder<>(getBigCorrectSample(), COUNT, getDataToMean(), getDataLength()).build();
