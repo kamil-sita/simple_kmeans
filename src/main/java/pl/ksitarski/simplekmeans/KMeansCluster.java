@@ -29,6 +29,7 @@ public class KMeansCluster<T> {
         if (points.size() == 0) {
             return null;
         }
+        Object[] tArr = points.toArray();
         meanPoint = dataToMean.getMean(points);
         return meanPoint;
     }
